@@ -7,7 +7,7 @@ import pandas as pd
 import plotly.express as px
 import streamlit as st
 
-st.set_page_config(page_title='DashAI', page_icon='📊', layout='wide')
+st.set_page_config(page_title='DashAI | Business Intelligence', page_icon='📊', layout='wide', initial_sidebar_state='expanded')
 
 # ---------- Core data interpretation ----------
 MEASURE_HINTS = {
@@ -367,18 +367,34 @@ def render_chart(df, spec, chart_type):
         fig = px.scatter(work, x=x, y=y, title=spec['title'])
     else:
         fig = px.bar(grouped, x=x, y=label_y, title=spec['title'])
-    fig.update_layout(height=390, margin=dict(l=20, r=20, t=55, b=20))
+    fig.update_layout(
+        template='plotly_white',
+        colorway=['#3563E9', '#14B8A6', '#F59E0B', '#8B5CF6', '#EC4899'],
+        font=dict(family='Arial, sans-serif', color='#263247', size=12),
+        title=dict(font=dict(size=16, color='#172033'), x=0.02, xanchor='left'),
+        height=390,
+        margin=dict(l=24, r=24, t=58, b=24),
+        paper_bgcolor='rgba(0,0,0,0)',
+        plot_bgcolor='rgba(0,0,0,0)',
+        hoverlabel=dict(bgcolor='#172033', font_color='white'),
+        legend=dict(orientation='h', yanchor='bottom', y=1.02, xanchor='right', x=1),
+    )
     st.plotly_chart(fig, use_container_width=True)
 
 
 # ---------- UI ----------
+st.caption('BUSINESS INTELLIGENCE WORKSPACE')
 st.title('DashAI')
-st.markdown('### Turn your data into a dashboard in minutes.')
+st.markdown('### Turn your data into decisions.')
+st.caption('Upload a spreadsheet, understand your data, and build an interactive business dashboard — in minutes.')
+st.divider()
 
-uploaded = st.file_uploader('Upload your Excel or CSV file', type=['xlsx', 'xls', 'csv'])
+st.subheader('Start with your data')
+st.write('Upload an Excel or CSV file to begin your analysis.')
+uploaded = st.file_uploader('Choose a dataset', type=['xlsx', 'xls', 'csv'], help='Supported formats: .xlsx, .xls and .csv')
 
 if not uploaded:
-    st.info('Upload an Excel or CSV file to start.')
+    st.info('Your workspace is ready. Upload a dataset above to get started.')
     st.stop()
 
 try:
@@ -399,7 +415,8 @@ try:
 
     st.success(f'Loaded **{len(df):,} rows** and **{len(df.columns):,} columns** from **{sheet_name}**.')
 
-    st.header('1. Understanding your data')
+    st.header('01  ·  Data overview')
+    st.caption('A quick profile of the structure and quality of your dataset.')
     c1, c2, c3, c4 = st.columns(4)
     c1.metric('Rows', f'{len(df):,}')
     c2.metric('Columns', f'{len(df.columns):,}')
@@ -411,7 +428,8 @@ try:
     with st.expander('Detected fields', expanded=True):
         st.dataframe(profile_data(df), use_container_width=True, hide_index=True)
 
-    st.header('2. Data issues')
+    st.header('02  ·  Data quality')
+    st.caption('Review missing values and duplicate records before building your dashboard.')
     issues = detect_issues(df)
     issue_mode = 'none'
     if not issues.empty:
@@ -436,7 +454,8 @@ try:
     else:
         st.success('No basic missing-value or duplicate-row issues detected.')
 
-    st.header('3. Dashboard setup')
+    st.header('03  ·  Dashboard preferences')
+    st.caption('Tell DashAI what this dashboard should help you understand.')
     purpose = st.radio(
         'What is the main purpose of this dashboard?',
         ['Management', 'Sales', 'Marketing', 'Finance', 'Operations', 'Customer Analytics', 'Other'],
@@ -448,7 +467,8 @@ try:
         max_selections=3,
     )
 
-    st.header('4. AI dashboard plan')
+    st.header('04  ·  Dashboard builder')
+    st.caption('Review the recommended KPIs and visuals, then customise your selection.')
     plan = build_plan(df, purpose, focus)
     st.write(f'**Purpose:** {purpose}')
     st.write(f'**Focus:** {", ".join(focus) if focus else "AI recommends based on the dataset"}')
@@ -515,8 +535,9 @@ try:
         date_col = find_col(work_df, 'date')
         work_df = parse_date_column(work_df, date_col)
 
-        st.header('5. Interactive dashboard')
-        st.caption('Filters and chart choices update the dashboard without changing your source file.')
+        st.divider()
+        st.header('05  ·  Your interactive dashboard')
+        st.caption('Explore your results. Filters and chart choices update the dashboard without changing your source file.')
 
         # Dashboard filters
         filter_cols = [c for c in [date_col, find_col(work_df, 'product'), find_col(work_df, 'region')] if c]
@@ -562,8 +583,7 @@ try:
         with st.expander('Dashboard configuration', expanded=False):
             st.json({'purpose': gp['purpose'], 'focus': gp['focus'], 'kpis': gp['kpis'], 'charts': gp['charts'], 'derived': gp['derived']})
 
-        st.success('Dashboard Engine v0.3 is active: real charts, KPI recalculation, date/product/region filters, and editable chart types are now working.')
-        st.info('Next build: connect a real AI interpreter, add AI Insights + Ask Your Data, then export/share the finished dashboard.')
+        st.caption('DashAI · Interactive Business Intelligence')
 
 except Exception as e:
     st.error(f'Could not read this file: {e}')
